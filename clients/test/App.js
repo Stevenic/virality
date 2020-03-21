@@ -24,7 +24,7 @@ export default function App(props) {
         SplashScreen.preventAutoHide();
 
         // Load our initial navigation state
-        setInitialNavigationState(await getInitialState() as any);
+        setInitialNavigationState(await getInitialState());
 
         // Load fonts
         await Font.loadAsync({
