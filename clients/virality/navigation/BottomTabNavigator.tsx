@@ -60,6 +60,6 @@ function getHeaderTitle(route) {
     case 'Contacts':
       return 'Recent contacts';
     case 'Links':
-      return 'Links to learn more';
+      return 'Helpful links';
   }
 }

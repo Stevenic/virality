@@ -8,21 +8,42 @@ export default function LinksScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <OptionButton
-        icon="md-school"
-        label="Read the Expo documentation"
-        onPress={() => WebBrowser.openBrowserAsync('https://docs.expo.io')}
+        icon="md-bed"
+        label="Coronavirus Self-Checker"
+        onPress={() => WebBrowser.openBrowserAsync('https://www.cdc.gov/coronavirus/2019-ncov/symptoms-testing/index.html')}
       />
 
       <OptionButton
-        icon="md-compass"
-        label="Read the React Navigation documentation"
-        onPress={() => WebBrowser.openBrowserAsync('https://reactnavigation.org')}
+        icon="md-map"
+        label="COVID-19 Live Map"
+        onPress={() => WebBrowser.openBrowserAsync('https://coronavirus.jhu.edu/map.html')}
       />
 
       <OptionButton
-        icon="ios-chatboxes"
-        label="Ask a question on the forums"
-        onPress={() => WebBrowser.openBrowserAsync('https://forums.expo.io')}
+        icon="md-globe"
+        label="Unites States COVID-19 information"
+        onPress={() => WebBrowser.openBrowserAsync('https://www.cdc.gov/coronavirus/2019-ncov/about/index.html')}
+        isLastOption
+      />
+
+      <OptionButton
+        icon="md-globe"
+        label="Coronavirus advisory information"
+        onPress={() => WebBrowser.openBrowserAsync('https://www.who.int/emergencies/diseases/novel-coronavirus-2019/advice-for-public')}
+        isLastOption
+      />
+
+      <OptionButton
+        icon="md-globe"
+        label="Coronavirus condition overview"
+        onPress={() => WebBrowser.openBrowserAsync('https://www.who.int/health-topics/coronavirus')}
+        isLastOption
+      />
+
+      <OptionButton
+        icon="md-globe"
+        label="Coronavirus Q&A"
+        onPress={() => WebBrowser.openBrowserAsync('https://www.who.int/news-room/q-a-detail/q-a-coronaviruses')}
         isLastOption
       />
     </ScrollView>
