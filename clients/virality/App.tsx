@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { Platform, StatusBar, StyleSheet, View, Alert } from 'react-native';
 import { SplashScreen } from 'expo';
+import * as TaskManager from 'expo-task-manager';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,8 +9,15 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import BottomTabNavigator from './navigation/BottomTabNavigator';
 import useLinking from './navigation/useLinking';
+import * as Location from './background/location';
 
 const Stack = createStackNavigator();
+
+TaskManager.defineTask('location-tracking', Location.TASK_HANDLER);
+Location.start('location-tracking');
+Location.subscribe((location, error) => {
+  Alert.alert('Location Update', JSON.stringify(location));
+});
 
 export default function App(props) {
   const [isLoadingComplete, setLoadingComplete] = React.useState(false);

@@ -23,7 +23,16 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app will use your phones location to automatically create new contact records for you. The \"always\" permission must be granted for this feature to work.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app will use your phones location to automatically create new contact records for you. The \"always\" permission must be granted for this feature to work.",
+        "NSLocationAlwaysUsageDescription": "This app will use your phones location to automatically create new contact records for you.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      }
     }
   }
 }
