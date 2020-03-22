@@ -6,18 +6,20 @@ import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-
 import BottomTabNavigator from './navigation/BottomTabNavigator';
 import useLinking from './navigation/useLinking';
 import * as Location from './background/location';
 
 const Stack = createStackNavigator();
 
+let start: any = undefined;
+
 TaskManager.defineTask('location-tracking', Location.TASK_HANDLER);
 Location.start('location-tracking');
-Location.subscribe((location, error) => {
-  Alert.alert('Location Update', JSON.stringify(location));
+Location.subscribeToChanges((location) => {
+  Alert.alert('location', JSON.stringify(location));
 });
+
 
 export default function App(props) {
   const [isLoadingComplete, setLoadingComplete] = React.useState(false);
