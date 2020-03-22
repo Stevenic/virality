@@ -169,7 +169,8 @@ function updateTableIndexes(table: LocalTableDef, item: object): boolean {
     let modified = false;
     for (const field in table.indexes) {
         const index = table.indexes[field];
-        let { id, value } = item as any;
+        let id: string = item['id'];
+        let value: any = item['field'];
         const numerical = !!index.numerical;
         if (numerical && typeof value != 'number') { value = 0 }
         let newEntry = true, changed = false;
