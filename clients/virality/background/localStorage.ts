@@ -1,4 +1,4 @@
-import { AsyncStorage } from 'react-native';
+import { AsyncStorage, Alert } from 'react-native';
 
 export interface LocalTableDef {
     name: string;
@@ -49,6 +49,18 @@ export async function openTable(name: string): Promise<LocalTableDef> {
     if (!table) { throw new Error(`A table named '${name}' couldn't be found.`) }
 
     return JSON.parse(table);
+}
+
+/**
+ * Deletes a table and all of its rows.
+ * @param name Name of the table to delete.
+ */
+export async function deleteTable(name: string): Promise<void> {
+    const allKeys = await AsyncStorage.getAllKeys();
+    const tableKeys = allKeys.filter(k => k == name || k.startsWith(`${name}|`));
+    if (tableKeys.length > 0) {
+        await AsyncStorage.multiRemove(tableKeys);
+    }
 }
 
 /**
@@ -170,7 +182,7 @@ function updateTableIndexes(table: LocalTableDef, item: object): boolean {
     for (const field in table.indexes) {
         const index = table.indexes[field];
         let id: string = item['id'];
-        let value: any = item['field'];
+        let value: any = item[field];
         const numerical = !!index.numerical;
         if (numerical && typeof value != 'number') { value = 0 }
         let newEntry = true, changed = false;
@@ -217,4 +229,114 @@ function updateTableIndexes(table: LocalTableDef, item: object): boolean {
     }
 
     return modified;
+}
+
+export async function runTest(): Promise<void> {
+    await deleteTable('test');
+
+    // Create a basic table without indexes.
+    await defineTable('test');
+    let table = await openTable('test');
+    assert(table, `can't open table`);
+
+    // Read & write items with a known ID
+    let item: any = await getItem(table, 'foo');
+    assert(!item, `shouldn't have found missing item`);
+    item = { id: 'foo', value: 'bar' };
+    await setItem(table, item);
+    assert(item.id == 'foo', `Item ID overwritten.`);
+    item = undefined;
+    item = await getItem(table, 'foo');
+    assert(item, `couldn't find saved item by id`);
+
+    // Delete item
+    await removeItem(table, 'foo');
+    item = await getItem(table, 'foo');
+    assert(!item, `failed to delete item`);
+
+    // Auto increment id's
+    item = { id: 'foo', value: 'bar' };
+    for (let i = 1; i < 10; i++) {
+        delete item.id;
+        await setItem(table, item);
+        assert(item.id == i.toString(), `unexpected id of ${item.id} assigned.`)
+    }
+
+    // Delete table
+    await deleteTable('test');
+    table = undefined;
+
+    // Create a table with indexes
+    await defineTable('test', {
+        name: { ascending: true },
+        age: { ascending: true, numerical: true },
+        reports: { ascending: false, numerical: true },
+        role: { ascending: false }
+    });
+    table = await openTable('test');
+    assert(table, `couldn't open table with indexes.`);
+    assert(table.indexes && table.indexes['name'], `indexes weren't initialized for table.`);
+
+    // Add test rows to table
+    await setItem(table, {
+        name: 'steve',
+        age: 51,
+        reports: 2,
+        role: 'dad'
+    });
+    await setItem(table, {
+        name: 'annabelle',
+        age: 4,
+        reports: 0,
+        role: 'daughter'
+    });
+    await setItem(table, {
+        name: 'donna',
+        age: 48,
+        reports: 1,
+        role: 'wife'
+    });
+
+    // Validate indexes
+    assertIndexOrder(table, 'name', ['annabelle', 'donna', 'steve']);
+    assertIndexOrder(table, 'age', [4, 48, 51]);
+    assertIndexOrder(table, 'reports', [2, 1, 0]);
+    assertIndexOrder(table, 'role', ['wife', 'daughter', 'dad']);
+
+    // Test listItems()
+    let results = await listItems<any>(table, 'name');
+    assert(results, `no results returned from listItems().`);
+    assert(!results.continuation, `unexpected continuation token returned by listItems().`);
+    assert(results.items.length == 3, `only '${results.items.length}' were returned from listItems().`);
+    assert(results.items[0].name == 'annabelle', `wrong index used by listItems().`);
+
+    // Test pagination
+    results = await listItems<any>(table, 'name', 2);
+    assert(results.items.length == 2, `'${results.items.length}' items returned for first page of pagination results.`);
+    assert(results.continuation, `continuation token missing for pagination test.`);
+    results = await listItems(table, 'name', 2, results.continuation);
+    assert(results.items.length == 1, `'${results.items.length}' items returned for second page of pagination results.`);
+    assert(!results.continuation, `continuation token returned for second page of pagination test.`);
+    assert(results.items[0].name == 'steve', `'${results.items[0].name}' was returned as 1st item of second page of pagination results.`)
+
+    // Delete test table
+    await deleteTable('test');
+}
+
+function assertIndexOrder(table: LocalTableDef, indexName: string, values: any[]) {
+    const index = table.indexes[indexName];
+    assert(index, `couldn't find index named '${indexName}'.`);
+    assert(Array.isArray(index.values), `'${indexName}' index not initialized.`);
+    assert(index.values.length == values.length, `'${indexName}' has an invalid length of ${index.values.length}`);
+    const indexData = JSON.stringify(index.values);
+    for (let i = 0; i < values.length; i++) {
+        assert(index.values[i].value === values[i], `'${indexName}' out of order: ${indexData}`);
+    }
+}
+
+function assert(test: any, msg: string) {
+    if (!test) {
+        Alert.alert('LocalStorage Test Error', msg);
+        throw new Error(`LocalStorage Test Failure: ${msg}`);
+    }
 }

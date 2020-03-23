@@ -9,16 +9,23 @@ import { createStackNavigator } from '@react-navigation/stack';
 import BottomTabNavigator from './navigation/BottomTabNavigator';
 import useLinking from './navigation/useLinking';
 import * as Location from './background/location';
+import * as LocalStorage from './background/localStorage';
 
 const Stack = createStackNavigator();
 
-let start: any = undefined;
-
+// Register tasks
 TaskManager.defineTask('location-tracking', Location.TASK_HANDLER);
-Location.start('location-tracking');
-Location.subscribeToChanges((location) => {
-  Alert.alert('location', JSON.stringify(location));
-});
+
+async function startApp(): Promise<void> {
+  // Run test
+  await LocalStorage.runTest();
+  Alert.alert('Startup', `All Tests Passed!`);
+
+  // Start services
+  await Location.start('location-tracking');
+  
+}
+startApp();
 
 
 export default function App(props) {
