@@ -1,6 +1,6 @@
 import * as Permissions from 'expo-permissions';
-import * as Location from 'expo-location';
-import { Platform, Task, Alert } from 'react-native';
+import * as ExpoLocation from 'expo-location';
+import { Platform, Task } from 'react-native';
 import { getDistance } from 'geolib';
 
 const changeSubscriptions: Map<Symbol, LocationChangeCallback> = new Map();
@@ -13,12 +13,12 @@ export type LocationChangeCallback = (location: LocationInfo) => void;
 export type LocationErrorCallback = (error: Error) => void;
 export type CancelLocationSubscription = () => void;
 
-export interface LocationInfo extends Location.LocationData {
-    address: Location.Address;
+export interface LocationInfo extends ExpoLocation.LocationData {
+    address: ExpoLocation.Address;
 }
 
 export interface LocationTrackingOptions {
-    accuracy?: Location.Accuracy;
+    accuracy?: ExpoLocation.Accuracy;
     timeInterval?: number;
     distanceInterval?: number;
     dwellTime?: number;
@@ -59,7 +59,7 @@ export const TASK_HANDLER: Task = async ({ data, error }) => {
 export async function start(taskName: string, options?: LocationTrackingOptions): Promise<boolean> {
     // Initialize options
     trackingOptions = Object.assign({
-        accuracy: Location.Accuracy.High,
+        accuracy: ExpoLocation.Accuracy.High,
         timeInterval: 1000,
         distanceInterval: 10,
         dwellTime: 1000 * 60 * 1,
@@ -68,7 +68,7 @@ export async function start(taskName: string, options?: LocationTrackingOptions)
 
     // Update geocoding api key
     if (trackingOptions.apiKey) {
-        Location.setApiKey(trackingOptions.apiKey);
+        ExpoLocation.setApiKey(trackingOptions.apiKey);
     }
 
     // Prompt user for background location access
@@ -78,12 +78,12 @@ export async function start(taskName: string, options?: LocationTrackingOptions)
     }
 
     // Start location tracking
-    await Location.startLocationUpdatesAsync(taskName, {
-        accuracy: Location.Accuracy.High,
+    await ExpoLocation.startLocationUpdatesAsync(taskName, {
+        accuracy: ExpoLocation.Accuracy.High,
         timeInterval: 1000,
         distanceInterval: 10,
         pausesUpdatesAutomatically: true,
-        activityType: Location.ActivityType.Other
+        activityType: ExpoLocation.ActivityType.Other
     });
 }
 
@@ -106,36 +106,7 @@ export function subscribeToErrors(callback: LocationErrorCallback): CancelLocati
     }
 }
 
-async function findAddress(location: Location.LocationData): Promise<LocationInfo> {
-    // Consult location cache first
-    const radius = Math.floor(trackingOptions.distanceInterval / 2);
-    for (let i = 0; i < locationCache.length; i++) {
-        const entry = locationCache[i];
-        if (getDistance(location.coords, entry.coords) <= radius) {
-            return entry;
-        }
-    }
-
-    // Reverse geocode location
-    const info: LocationInfo = Object.assign({ address: undefined }, location);
-    const addresses = await Location.reverseGeocodeAsync({ 
-        latitude: info.coords.latitude,
-        longitude: info.coords.longitude
-    });
-    if (Array.isArray(addresses) && addresses.length > 0) {
-        info.address = addresses[0];
-    }
-
-    // Add to cache
-    locationCache.push(info);
-    if (locationCache.length > trackingOptions.cacheSize) {
-        // Purge cache
-        locationCache.shift();
-    }
-    return info;
-}
-
-function compareLocations(l1: LocationInfo, l2: LocationInfo): boolean {
+export function compareLocations(l1: Partial<LocationInfo>, l2: Partial<LocationInfo>): boolean {
     if (!l1 || !l2 || !l1.address || !l2.address) {
         return false;
     }
@@ -156,4 +127,32 @@ function compareLocations(l1: LocationInfo, l2: LocationInfo): boolean {
     }
 
     return true;
+}
+async function findAddress(location: ExpoLocation.LocationData): Promise<LocationInfo> {
+    // Consult location cache first
+    const radius = Math.floor(trackingOptions.distanceInterval / 2);
+    for (let i = 0; i < locationCache.length; i++) {
+        const entry = locationCache[i];
+        if (getDistance(location.coords, entry.coords) <= radius) {
+            return entry;
+        }
+    }
+
+    // Reverse geocode location
+    const info: LocationInfo = Object.assign({ address: undefined }, location);
+    const addresses = await ExpoLocation.reverseGeocodeAsync({ 
+        latitude: info.coords.latitude,
+        longitude: info.coords.longitude
+    });
+    if (Array.isArray(addresses) && addresses.length > 0) {
+        info.address = addresses[0];
+    }
+
+    // Add to cache
+    locationCache.push(info);
+    if (locationCache.length > trackingOptions.cacheSize) {
+        // Purge cache
+        locationCache.shift();
+    }
+    return info;
 }

@@ -17,8 +17,8 @@ export interface LocalIndexKey {
     value: any;
 }
 
-export interface StorageResults {
-    items: object[];
+export interface StorageResults<T = object> {
+    items: T[];
     continuation?: string;
 }
 
@@ -58,7 +58,7 @@ export async function openTable(name: string): Promise<LocalTableDef> {
  * @param table Table to use.
  * @param id ID of item to get.
  */
-export async function getItem(table: LocalTableDef, id: string): Promise<object> {
+export async function getItem<T = object>(table: LocalTableDef, id: string): Promise<T> {
     const key = `${table.name}|${id}`;
     const item = await AsyncStorage.getItem(key);
     return item ? JSON.parse(item) : undefined;
@@ -135,8 +135,8 @@ export async function removeItem(table: LocalTableDef, id: string): Promise<void
  * @param continuation (Optional) continuation token used to fetch the next page of items.
  * @returns A results object which includes the page of items and an optional continuation token if there are additional items to retrieve.  
  */
-export async function listItems(table: LocalTableDef, indexName: string, count = 10, continuation?: string): Promise<StorageResults> {
-    const results: StorageResults = { items: [] };
+export async function listItems<T = object>(table: LocalTableDef, indexName: string, count = 10, continuation?: string): Promise<StorageResults<T>> {
+    const results: StorageResults<T> = { items: [] };
     const startIndex = continuation ? parseInt(continuation) : 0;
     const index = table.indexes[indexName];
     if (!index) { throw new Error(`An index named '${indexName}' could not be found.`) }
